@@ -3,6 +3,8 @@ package com.graphqljava.tutorial.bookdetails;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import graphql.GraphQL;
+import graphql.schema.FieldCoordinates;
+import graphql.schema.GraphQLCodeRegistry;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
@@ -15,8 +17,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.URL;
-
-import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring;
 
 @Component
 public class GraphQLProvider {
@@ -44,10 +44,12 @@ public class GraphQLProvider {
 
     private RuntimeWiring buildWiring() {
         return RuntimeWiring.newRuntimeWiring()
-                .type(newTypeWiring("Query")
-                        .dataFetcher("bookById", graphQLDataFetchers.getBookByIdDataFetcher()))
-                .type(newTypeWiring("Book")
-                        .dataFetcher("author", graphQLDataFetchers.getAuthorDataFetcher()))
+                .codeRegistry(GraphQLCodeRegistry
+                        .newCodeRegistry()
+                        .dataFetcher(FieldCoordinates.coordinates("Query", "bookById"), graphQLDataFetchers.getBookByIdDataFetcher())
+                        .dataFetcher(FieldCoordinates.coordinates("Book", "author"), graphQLDataFetchers.getAuthorDataFetcher())
+                        .defaultDataFetcher(environment -> graphQLDataFetchers.getAuthorDataFetcher())
+                        .build())
                 .build();
     }
 
